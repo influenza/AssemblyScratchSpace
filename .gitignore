@@ -10,6 +10,9 @@ src/hello
 src/copyfile
 src/utils
 
+# ASM listings
+src/*.lst
+
 # Autotools artifacts
 **/Makefile.in
 **/Makefile
