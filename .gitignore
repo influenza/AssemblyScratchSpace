@@ -1,0 +1,23 @@
+# Vim swap files
+*.swp
+*.swo
+
+# Object files
+*.o
+
+# Binaries
+src/hello
+src/copyfile
+src/utils
+
+# Autotools artifacts
+**/Makefile.in
+**/Makefile
+autom4te.cache
+config.log
+config.status
+configure
+install-sh
+missing
+compile
+aclocal.m4
