@@ -8,7 +8,8 @@
 # Binaries
 src/hello
 src/copyfile
-src/utils
+src/util
+src/print_rax
 
 # ASM listings
 src/*.lst

@@ -1,4 +1,4 @@
-bin_PROGRAMS = copyfile hello print_rax
+bin_PROGRAMS = copyfile hello print_rax util
 
 copyfile_SOURCES = copyfile.asm
 
@@ -12,9 +12,14 @@ print_rax_SOURCES = print_rax.asm
 
 print_rax_LDFLAGS = -e _start -s
 
+util_SOURCES = util.asm
+
+util_LDFLAGS = -e _start -s
+
 CLEANFILES = copyfile.o copyfile.lst copyfile \
 						 hello.o hello.lst hello \
-						 print_rax.o print_rax.lst printrax
+						 print_rax.o print_rax.lst printrax \
+						 util.o util.lst util
 
 copyfile: copyfile.o
 	ld -m elf_x86_64 -o copyfile copyfile.o
@@ -33,3 +38,9 @@ print_rax: print_rax.o
 
 print_rax.o: print_rax.asm
 	nasm -f elf64 -g -F dwarf -l print_rax.lst print_rax.asm
+
+util: util.o
+	ld -m elf_x86_64 -o util util.o
+
+util.o: util.asm
+	nasm -f elf64 -g -F dwarf -l util.lst util.asm
