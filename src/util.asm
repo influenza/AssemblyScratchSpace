@@ -56,7 +56,7 @@ print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdo
 _start:
     ; setup
     mov rcx, 0xA  ; print ten times
-    ; Have to move 64 bit value through the rax register
+    ; Have to move 64 bit immediate value through the rax register
     mov rax, 0x11223344CAFEBABE
     mov qword[val], rax
   .iterate:
