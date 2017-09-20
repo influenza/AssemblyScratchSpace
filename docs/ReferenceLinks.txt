@@ -1,0 +1,5 @@
+Searchable, sortable system call table:
+  https://filippo.io/linux-syscall-table/
+
+NASM Docs (local copy)
+  file:///home/rdahlgren/Documents/Books/nasm-2.13.01/doc/html/nasmdoc3.html#section-3.3
