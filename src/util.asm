@@ -8,7 +8,12 @@ test_string: db 'hello world', 0
 section .text
 global _start
 
-strlen: ; calculate length or string starting at address in rdi, return in rax
+exit: ; set the exit code specified in rdi and terminate the process
+      mov     rax, 60 ; syscall: sys_exit
+      syscall
+    ret
+
+string_length: ; calculate length or string starting at address in rdi, return in rax
     xor rax,  rax    ; clean out result space
   .iterate:
     cmp byte [rdi + rax], 0   ; is this the null terminator?
@@ -17,6 +22,27 @@ strlen: ; calculate length or string starting at address in rdi, return in rax
     jmp .iterate
   .end:
     ret
+
+print_string:     ; prints a string to stdout, sent pointer in rdi. String should be null terminated
+      push rdi        ; store provided argument
+      call string_length
+      mov rdx, rax    ; move string length to param 2 of syscall
+      mov rax,  1     ; syscall: sys_write
+      mov rdi,  1     ; fd: stdout
+      pop rsi         ; pop string pointer
+      syscall
+    ret
+
+print_char:     ; prints the character code in rdi to stdout
+    push rdi
+    ; TODO: Figure out how to pass a pointer to the register :-/
+    mov     rax,  1 ; syscall: sys_write
+    mov     rdi,  1 ; fd: stdout
+    mov     rsi, newline_char ; buf
+    mov     rdx,  1 ; count: 1
+    syscall
+  ret
+
 
 print_newline:    ; Prints a newline character to stdout
     mov     rax,  1 ; syscall: sys_write
