@@ -1,5 +1,5 @@
 %define ascii_zero  0x30
-%define uint64_digits 19
+%define uint64_digits 20
 
 section .data
 
@@ -62,25 +62,27 @@ print_newline:    ; Prints a newline character to stdout
 print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     mov   rax, rdi    ; Copy in provided value to the accumulator
 
-    mov   r8, 10      ; Base to convert to
-    mov   rcx, uint64_digits     ; The 64-bit uint can require 20 decimal digits
-  .each_char_loop:
+    mov   r8, 10      ; Base to convert to for display - base 10
+    mov   rcx, uint64_digits  ; The 64-bit uint can require up to this many digits
+
+  .each_char_loop:  ; print each character possible in an 8-byte unsigned integer
     mov   r9, 1   ; Calculate divisor, store in r9
     push  rcx
   .calculate_divisor_loop:
+    ; The last spot, the ones digit, should use 1 as a divider
     dec   rcx
     test  rcx, rcx
     jz .divisor_calculation_finished
 
     push  rax
-    mov   rax, r9
-    mul   r8
-    mov   r9, rax ; mult by 10
+    mov   rax, r9 ; move the partial result back to the accumulator
+    mul   r8      ; mul applies (and destroys) the accumulator - rax
+    mov   r9, rax ; copy the result back over to r9
     pop   rax
 
     jmp .calculate_divisor_loop
 
-  .divisor_calculation_finished:
+  .divisor_calculation_finished:    ; Indicates that the divisor for this digit is ready
 
     pop   rcx
 
@@ -97,7 +99,7 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     push  rcx
     push  rdi
     push  rdx
-    mov   rdi, rax
+    mov   rdi, rax  ; print out the quotient
     call print_char
     ; Restore registers
     pop   rdx
@@ -168,7 +170,7 @@ _start:
     call print_char
     call print_newline
 
-    mov rdi, 1122334455667788
+    mov rdi, 18446744073709551615   ; <-- 2^64-1
     call print_uint
     call print_newline
 
