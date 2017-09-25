@@ -7,6 +7,7 @@ section .data
 
 codes: db '0123456789abcdef'
 newline_char: db 10
+negative_sign_char: db '-'
 test_string: db 'hello world', 0
 val: dq  -1
 
@@ -140,7 +141,21 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
   ret
 
 print_int:    ; prints a signed integer (including sign)
-    ; Sign bit is the most-significant bit of a signed int (stored via two's complement)
+    ; print sign if necessary
+    ; use uint for the remaining characters
+    mov   rax, rdi
+    test  rax, rax
+    jns   .unsigned
+    ; otherwise print '-' and convert the absolute value to its
+    ; unsigned representation
+    push  rdi
+    mov   rdi, [negative_sign_char]
+    call  print_char
+    pop   rdi
+    dec   rdi
+    not   rdi
+  .unsigned:
+    call print_uint
   ret
 
 print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdout
@@ -202,6 +217,10 @@ _start:
 
     mov rdi, 42   ; Test omission of leading zeroes
     call print_uint
+    call print_newline
+
+    mov rdi, -42   ; Test omission of leading zeroes
+    call print_int
     call print_newline
 
     mov rdi, test_string
