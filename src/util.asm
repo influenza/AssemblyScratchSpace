@@ -1,6 +1,8 @@
 %define ascii_zero  0x30
 %define uint64_digits 20
 
+%define reciprocal_log2_of_10 0.30102999
+
 section .data
 
 codes: db '0123456789abcdef'
@@ -86,6 +88,15 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
 
     pop   rcx
 
+    ; At this point, let's avoid printing out leading zeroes.
+    ; Note that the number of digits can be pre-computed as 1 + floor(log10(rax)),
+    ; but the use of logarithm functionality in the FPU is new to me right now.
+    ; Some notes for later: FILD, FYL2X, F2XM1, and FDIVP are likely to be used.
+    ;
+    ; For now, just spin and print nothing until a non-zero quotient is found.
+    ; TODO: Make sure the value '0' prints as such and is not displayed as the
+    ;   empty string.
+
     ; The DIV instruction uses a 128 bit number with the low 64 bits in rax and the high
     ; 64 bits stored in rdx. The result is placed into rax and the remainder in rdx.
     ; Of note here is that rdx is implicitly pulled into this and we are trying to use
@@ -115,6 +126,10 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     dec   rcx
     test  rcx, rcx
     jnz .each_char_loop
+  ret
+
+print_int:    ; prints a signed integer (including sign)
+    ; Sign bit is the most-significant bit of a signed int (stored via two's complement)
   ret
 
 print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdout
