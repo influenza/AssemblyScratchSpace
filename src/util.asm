@@ -62,6 +62,7 @@ print_newline:    ; Prints a newline character to stdout
   ret
 
 print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
+    xor   r10, r10    ; Zero out register for later flag use
     mov   rax, rdi    ; Copy in provided value to the accumulator
 
     mov   r8, 10      ; Base to convert to for display - base 10
@@ -102,8 +103,15 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     ; Of note here is that rdx is implicitly pulled into this and we are trying to use
     ; it to store the divisor.
     div   r9       ; Divide by that calculated divisor. Result in rax, remainder in rdx
+    test  r10, r10
+    jnz   .leading_zero_flag_already_set
+    test  rax, rax
+    jz    .after_print_char   ; Leading zero, don't print it
+    mov   r10,  1           ; flip the flag
+  .leading_zero_flag_already_set:
     add   rax, ascii_zero ; Convert to ascii code
     ; store caller saved registers
+    push  r10
     push  r9
     push  r8
     push  rax
@@ -119,6 +127,9 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     pop   rax
     pop   r8
     pop   r9
+    pop   r10
+
+  .after_print_char:
 
     mov   rax, rdx    ; mov remainder over to be processed
     cqo               ; sign extend rax into rdx
@@ -186,6 +197,10 @@ _start:
     call print_newline
 
     mov rdi, 18446744073709551615   ; <-- 2^64-1
+    call print_uint
+    call print_newline
+
+    mov rdi, 42   ; Test omission of leading zeroes
     call print_uint
     call print_newline
 
