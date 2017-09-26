@@ -2,6 +2,8 @@
 %define ascii_hyphen 0x2D
 %define ascii_zero  0x30
 %define uint64_digits 20
+%define uint_buffer_size uint64_digits + 1
+%define leading_zero_flag 0x8000
 
 %define reciprocal_log2_of_10 0.30102999
 
@@ -64,6 +66,24 @@ print_newline:    ; Prints a newline character to stdout
   ret
 
 print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
+    push  rbp
+    mov   rbp, rsp  ; copy initial stack pointer to rbp
+    sub   rsp, uint_buffer_size    ; Allocate space for 20 digits and a null terminator
+    lea   rsi, [rbp - uint_buffer_size] ; point to space with rsi
+    call  render_uint_to_buffer
+    lea   rdi, [rbp - uint_buffer_size] ; move pointer to rdi
+    call  print_string
+    add   rsp, uint_buffer_size ; free space for uint buffer
+    pop rbp
+  ret
+
+; writes decimal representation of the unsigned 8-byte integer in rdi
+; to the buffer pointed to in rsi. The resulting string will be null
+; terminated. The provided buffer should be at least 21 bytes in length.
+render_uint_to_buffer:   
+    ; the lowest byte of r10 (r10b) will store the current offset into
+    ; the provided buffer. The most significant bit of the lower 16 bits
+    ; will be used as a flag to skip leading zeroes.
     xor   r10, r10    ; Zero out register for later flag use
     mov   rax, rdi    ; Copy in provided value to the accumulator
 
@@ -105,33 +125,26 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     ; Of note here is that rdx is implicitly pulled into this and we are trying to use
     ; it to store the divisor.
     div   r9       ; Divide by that calculated divisor. Result in rax, remainder in rdx
-    test  r10, r10
+    push  r10
+    and   r10w, leading_zero_flag
+    test  r10w, r10w
+    pop   r10
     jnz   .leading_zero_flag_already_set
-    test  rax, rax
-    jz    .after_print_char   ; Leading zero, don't print it
-    mov   r10,  1           ; flip the flag
+    test  rax, rax    ; check the quotient
+    jz    .after_write_char   ; Leading zero, don't print it
+    or   r10w,  leading_zero_flag ; flip the flag
   .leading_zero_flag_already_set:
     add   rax, ascii_zero ; Convert to ascii code
-    ; store caller saved registers
-    push  r10
-    push  r9
-    push  r8
-    push  rax
-    push  rcx
-    push  rdi
-    push  rdx
-    mov   rdi, rax  ; print out the quotient
-    call print_char
-    ; Restore registers
-    pop   rdx
-    pop   rdi
-    pop   rcx
-    pop   rax
-    pop   r8
-    pop   r9
-    pop   r10
 
-  .after_print_char:
+    ; Write character to the buffer, increment buffer offset
+    push  r10
+    and   r10, 0x1F
+    lea   r11, [rsi + r10]
+    pop   r10
+    mov   [r11], rax
+    inc   r10
+
+  .after_write_char:
 
     mov   rax, rdx    ; mov remainder over to be processed
     cqo               ; sign extend rax into rdx
@@ -139,10 +152,20 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     dec   rcx
     test  rcx, rcx
     jnz .each_char_loop
+    ; Write null terminator
+    push  r10   ; r10 is holding the offset into our char buffer in the low byte
+    and   r10, 0x1F
+    lea   r11, [rsi + r10]
+    pop   r10
+    mov   byte[r11], 0x00
   ret
 
-print_int:    ; prints a signed integer (including sign)
-    ; TODO: Write sign to buffer, pass remaining buffer to print_uint
+print_int:    ; prints the signed integer passed in $rdi (including sign)
+    push  rbp
+    mov   rbp, rsp  ; copy initial stack pointer to rbp
+    sub   rsp, uint_buffer_size    ; Allocate space for 20 digits and a null terminator
+
+    xor   r10, r10  ; Will store buffer offset in r10
     ; print sign if necessary
     ; use uint for the remaining characters
     mov   rax, rdi
@@ -150,14 +173,29 @@ print_int:    ; prints a signed integer (including sign)
     jns   .unsigned
     ; otherwise print '-' and convert the absolute value to its
     ; unsigned representation
-    push  rdi
-    mov   rdi, ascii_hyphen
-    call  print_char
-    pop   rdi
+    inc   r10 ; Move buffer pointer offset by one
+    mov   byte[rbp - uint_buffer_size], ascii_hyphen
+
+    ; Convert the provided number to an unsigned int
     dec   rdi
     not   rdi
   .unsigned:
-    call print_uint
+
+    lea   rsi, [rbp - uint_buffer_size + r10] ; point to space with rsi
+    call  render_uint_to_buffer
+    lea   rdi, [rbp - uint_buffer_size] ; move pointer to rdi
+    call  print_string
+
+    add   rsp, uint_buffer_size ; free buffer space
+    pop rbp
+  ret
+
+read_char:  ; Read a character from STDIN and return its value in rax
+  ret
+
+; Read a word from STDIN into a provided buffer. Return the buffer address, or zero
+; if a problem is encountered.
+read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address otherws
   ret
 
 print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdout
@@ -213,7 +251,8 @@ _start:
     call print_char
     call print_newline
 
-    mov rdi, 18446744073709551615   ; <-- 2^64-1
+    ;mov rdi, 18446744073709551615   ; <-- 2^64-1
+    mov rdi, 7654321    ; Debugging value
     call print_uint
     call print_newline
 
