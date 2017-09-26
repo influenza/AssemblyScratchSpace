@@ -1,0 +1,10 @@
+FILD - Load integer
+FDIVP - Divides st(0) by st(1)
+FSCALE scale result by power of two
+
+Exponentiation:
+  F2XM1 - 
+
+Logarithm:
+  FYL2X - Compute "y * log2(x)"
+  "Computes (ST(1) * log2(ST(0))), stores the result in resister ST(1) and pops the FPU reg stack

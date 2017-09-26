@@ -1,0 +1,14 @@
+string_length - done
+print_string - done
+print_char - done
+print_newline - done
+print_uint (unsigned 8 byte integer in decimal format) - done
+print_int (signed 8-byte integer)
+read_char (read one char from stdin and return it)
+read_word:
+  accept a buffer address and size, read next word from stdin
+parse_uint: null terminated string -> unsigned int, number in rax, chars read in rdx
+parse_int: same, include sign char in char count (rdx)
+string_equals: return 1 if equal, 0 otherwise
+string_copy: src, dst, size, copy and return destination address if the string fit, 0 otherwise
+
