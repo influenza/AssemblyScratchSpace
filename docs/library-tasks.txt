@@ -3,7 +3,7 @@ print_string - done
 print_char - done
 print_newline - done
 print_uint (unsigned 8 byte integer in decimal format) - done
-print_int (signed 8-byte integer)
+print_int (signed 8-byte integer) - done
 read_char (read one char from stdin and return it)
 read_word:
   accept a buffer address and size, read next word from stdin
