@@ -1,3 +1,5 @@
+%define ascii_newline 0x10
+%define ascii_hyphen 0x2D
 %define ascii_zero  0x30
 %define uint64_digits 20
 
@@ -7,7 +9,6 @@ section .data
 
 codes: db '0123456789abcdef'
 newline_char: db 10
-negative_sign_char: db '-'
 test_string: db 'hello world', 0
 val: dq  -1
 
@@ -141,6 +142,7 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
   ret
 
 print_int:    ; prints a signed integer (including sign)
+    ; TODO: Write sign to buffer, pass remaining buffer to print_uint
     ; print sign if necessary
     ; use uint for the remaining characters
     mov   rax, rdi
@@ -149,7 +151,7 @@ print_int:    ; prints a signed integer (including sign)
     ; otherwise print '-' and convert the absolute value to its
     ; unsigned representation
     push  rdi
-    mov   rdi, [negative_sign_char]
+    mov   rdi, ascii_hyphen
     call  print_char
     pop   rdi
     dec   rdi
