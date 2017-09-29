@@ -23,3 +23,17 @@ Returning values from a function
 
 Return value should be placed in rax. An additional return value
 may be placed in rdx.
+
+
+Using stack-local variables
+---------------------------
+
+As inspired by gcc C++ code,
+
+      push rbp      ; we will be using this later, so save it to restore at the end
+      mov  rbp, rsp ; store the initial stack pointer before making adjustments
+      sub  rsp, 16   ; i.e., allocate 16 bytes on the stack
+      lea  rsi, [rbp - 8]  ; i.e., send a pointer to an 8 byte buffer at the end of the stack space
+      ; .. rest of the logic
+      add  rsp, 16  ; free the stack storage space
+      pop rbp       ; restore initial rbp value
