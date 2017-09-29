@@ -251,8 +251,7 @@ _start:
     call print_char
     call print_newline
 
-    ;mov rdi, 18446744073709551615   ; <-- 2^64-1
-    mov rdi, 7654321    ; Debugging value
+    mov rdi, 18446744073709551615   ; <-- 2^64-1
     call print_uint
     call print_newline
 
