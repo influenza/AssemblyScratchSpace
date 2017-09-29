@@ -191,6 +191,23 @@ print_int:    ; prints the signed integer passed in $rdi (including sign)
   ret
 
 read_char:  ; Read a character from STDIN and return its value in rax
+    ; Allocate a one-byte buffer
+    push  rbp
+    mov   rbp, rsp
+    sub   rsp, 1
+    ; Call sys_read for a single character
+    xor   rax,  rax       ; syscall: 0 = sys_read
+    xor   rdi,  rdi       ; param 1, file desc: 0 = STDIN
+    lea   rsi,  [rbp - 1] ; param 2, buffer
+    mov   rdx,  1         ; read one char
+
+    syscall
+
+    ; value should now be in [rbp - 1]
+    mov   al, byte[rbp - 1]
+
+    add rsp, 1
+    pop rbp
   ret
 
 ; Read a word from STDIN into a provided buffer. Return the buffer address, or zero
@@ -226,31 +243,31 @@ print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdo
   ret
 
 _start:
-    ; setup
-    mov rcx, 0xA  ; print ten times
-    ; Have to move 64 bit immediate value through the rax register
-    mov rax, 0x11223344CAFEBABE
-    mov qword[val], rax
-  .iterate:
-    mov rdi, qword [val]
-    push rcx
-    call print_hex  ; print it
-    call print_newline
-    pop rcx
-    add qword[val], 1  ; add one to the value to print
-
-    dec rcx   ; one iteration complete
-    test rcx, rcx
-    jnz .iterate
-
+    ; Exercise print_string and print_newline
+    ; ---------------------------------------
     mov rdi, test_string
     call print_string
     call print_newline
 
+    ; Exercise print_char
+    ; ---------------------------------------
     mov rdi, [test_string]
     call print_char
     call print_newline
 
+    ; Exercise read_char
+    ; ---------------------------------------
+    call  read_char
+    push  rax
+    call  print_newline
+    pop   rax
+    mov   rdi, rax
+    call  print_char
+    call  print_newline
+
+
+    ; Exercise print_uint
+    ; ---------------------------------------
     mov rdi, 18446744073709551615   ; <-- 2^64-1
     call print_uint
     call print_newline
@@ -263,6 +280,8 @@ _start:
     call print_int
     call print_newline
 
+    ; Exercise string_length
+    ; ---------------------------------------
     mov rdi, test_string
     call string_length
     mov rdi, rax  ; put length into exit code
