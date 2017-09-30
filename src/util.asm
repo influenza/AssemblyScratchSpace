@@ -18,7 +18,7 @@ char_buffer:  resb 1
 uint_buffer:  resb 21 ; 2^64 = 18446744073709551616 (length 20) + null terminator
 
 section .text
-global _start
+;global _start
 
 exit: ; set the exit code specified in rdi and terminate the process
       mov     rax, 60 ; syscall: sys_exit
@@ -187,7 +187,8 @@ print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdo
 
   ret
 
-_start:
+;_start:
+definitely_not_start:
     ; setup
     mov rcx, 0xA  ; print ten times
     ; Have to move 64 bit immediate value through the rax register
