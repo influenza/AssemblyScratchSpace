@@ -5,19 +5,14 @@
 %define uint_buffer_size uint64_digits + 1
 %define leading_zero_flag 0x8000
 
-%define reciprocal_log2_of_10 0.30102999
-
 section .data
 
 codes: db '0123456789abcdef'
 newline_char: db 10
 test_string: db 'hello world', 0
+prompt_string: db 'enter a character> ', 0
+conf_string: db 'printing the entered character: ', 0
 val: dq  -1
-
-
-section .bss
-char_buffer:  resb 1
-uint_buffer:  resb 21 ; 2^64 = 18446744073709551616 (length 20) + null terminator
 
 section .text
 global _start
@@ -38,7 +33,7 @@ string_length: ; calculate length or string starting at address in rdi, return i
     ret
 
 print_string:     ; prints a null-terminated string to stdout, sent pointer in rdi.
-      push rdi        ; store provided argument
+      push rdi        ; store provided string pointer
       call string_length
       mov rdx, rax    ; move string length to param 2 of syscall
       mov rax,  1     ; syscall: sys_write
@@ -48,12 +43,20 @@ print_string:     ; prints a null-terminated string to stdout, sent pointer in r
     ret
 
 print_char:     ; prints the character code in rdi to stdout
-    mov     [char_buffer], rdi    ; mov contents of rdi into the char buffer storage
+    ; Reserve a single character buffer on the stack
+    push    rbp
+    mov     rbp, rsp
+    sub     rsp, 1
+
+    mov     [rbp - 1], rdi    ; mov contents of rdi into the char buffer storage
     mov     rax,  1 ; syscall: sys_write
     mov     rdi,  1 ; fd: stdout
-    mov     rsi, char_buffer ; buf
+    lea     rsi, [rbp - 1] ; buf
     mov     rdx,  1 ; count: 1
     syscall
+
+    add     rsp, 1  ; free buffer
+    pop     rbp
   ret
 
 
@@ -69,10 +72,12 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     push  rbp
     mov   rbp, rsp  ; copy initial stack pointer to rbp
     sub   rsp, uint_buffer_size    ; Allocate space for 20 digits and a null terminator
-    lea   rsi, [rbp - uint_buffer_size] ; point to space with rsi
+
+    lea   rsi, [rbp - uint_buffer_size] ; point to buffer with rsi
     call  render_uint_to_buffer
     lea   rdi, [rbp - uint_buffer_size] ; move pointer to rdi
     call  print_string
+
     add   rsp, uint_buffer_size ; free space for uint buffer
     pop rbp
   ret
@@ -243,23 +248,26 @@ print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdo
   ret
 
 _start:
-    ; Exercise print_string and print_newline
-    ; ---------------------------------------
-    mov rdi, test_string
-    call print_string
-    call print_newline
-
-    ; Exercise print_char
+    ; Exercise print_char and print_newline
     ; ---------------------------------------
     mov rdi, [test_string]
     call print_char
     call print_newline
 
+    ; Exercise print_string
+    ; ---------------------------------------
+    mov rdi, prompt_string
+    call print_string
+
     ; Exercise read_char
     ; ---------------------------------------
     call  read_char
     push  rax
+
+    mov   rdi, conf_string
+    call  print_string
     call  print_newline
+
     pop   rax
     mov   rdi, rax
     call  print_char
@@ -286,6 +294,4 @@ _start:
     call string_length
     mov rdi, rax  ; put length into exit code
 
-    mov rax, 60 ; syscall: sys_exit
-    ;xor rdi, rdi  ; error_code: 0, all is ok
-    syscall
+    call exit
