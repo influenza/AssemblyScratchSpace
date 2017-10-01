@@ -276,7 +276,7 @@ print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdo
 
   ret
 
-_start:
+_definitely_not_start:
     ; Exercise print_char and print_newline
     ; ---------------------------------------
     mov rdi, [test_string]
