@@ -4,6 +4,7 @@ Calling a function
 * Save all caller-saved registers that should survive the function call:
   (i.e., everything other than rbx, rbp, rsp, r12-r15)
 * Store args in the relevant registers (rdi, rsi, etc)
+  * SysV ABI: RDI, RSI, RDX, RCX, R8, R9 
 * Invoke the function using call <label>
 * After function call, rax (and rdx) contain retval
 * Restore caller-saved registers stored before call.
