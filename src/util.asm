@@ -35,6 +35,13 @@ string_length: ; calculate length or string starting at address in rdi, return i
   .end:
     ret
 
+string_copy: ;src, dst, size, copy and return destination address if fits, 0 otherwise
+  ;rsi
+  ;rdi
+  ;rdx
+
+  ret
+
 print_string:     ; prints a null-terminated string to stdout, sent pointer in rdi.
       push rdi        ; store provided argument
       call string_length
