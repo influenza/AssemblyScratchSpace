@@ -32,6 +32,35 @@ string_length: ; calculate length or string starting at address in rdi, return i
   .end:
     ret
 
+; Copy the string pointed to in RDI to the buffer pointed to in RSI with size stored
+; in RDX. If src fits in the dst buffer, the destination address will be returned in
+; RAX. Otherwise 0 will be stored in RAX.
+string_copy:
+    mov     rax,  rsi ; Default return value is original buffer address
+
+    mov     rcx,  rdx ; move buffer size to rcx
+
+    .loop_start:
+    test    rcx,  rcx
+    jz      .buffer_full
+
+
+    mov     r8, [rdi]  ; Copy the current character
+    mov     [rsi], r8  ; Copy the current character
+    test    r8, r8  ; null terminator?
+    jz      .copy_complete
+
+    inc     rsi ; on to the next spot
+    inc     rdi ; for source and dest
+
+    dec     rcx ; one less character is available in the buffer
+    jmp     .loop_start
+
+    .buffer_full: ; buffer has been overrun, return zero
+    xor     rax, rax
+    .copy_complete: ; end of process, return original buffer address
+  ret
+
 print_string:     ; prints a null-terminated string to stdout, sent pointer in rdi.
       push rdi        ; store provided string pointer
       call string_length
@@ -293,5 +322,22 @@ _start:
     mov rdi, test_string
     call string_length
     mov rdi, rax  ; put length into exit code
+
+    ; Exercise string copy
+    ; ---------------------------------------
+    sub     rsp,  16 ; Allocate a buffer on the stack
+    mov     rdi,  test_string
+    lea     rsi,  [rsp]
+    mov     rdx,  16
+    call    string_copy
+    ; We should now have the test string also on the stack. Print them both
+    mov     rdi, test_string
+    call    print_string
+    call    print_newline
+    lea     rdi, [rsp]
+    call    print_string
+    call    print_newline
+
+    add     rsp,  16 ; Free buffer
 
     call exit
