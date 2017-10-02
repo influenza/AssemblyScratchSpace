@@ -100,6 +100,7 @@ print_newline:    ; Prints a newline character to stdout
 print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     push  rbp
     mov   rbp, rsp  ; copy initial stack pointer to rbp
+
     sub   rsp, uint_buffer_size    ; Allocate space for 20 digits and a null terminator
 
     lea   rsi, [rbp - uint_buffer_size] ; point to buffer with rsi
@@ -108,7 +109,7 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     call  print_string
 
     add   rsp, uint_buffer_size ; free space for uint buffer
-    pop rbp
+    pop   rbp
   ret
 
 ; writes decimal representation of the unsigned 8-byte integer in rdi
@@ -165,7 +166,12 @@ render_uint_to_buffer:
     pop   r10
     jnz   .leading_zero_flag_already_set
     test  rax, rax    ; check the quotient
-    jz    .after_write_char   ; Leading zero, don't print it
+    ; leading zero && divisor != 1
+    jnz   .flip_the_flag   ; non-zero quotient, flip the flag
+    cmp   r9, 1
+    je    .flip_the_flag  ; divisor = 1, flip the flag
+    jmp   .after_write_char ; otherwise skip it (leading zero)
+  .flip_the_flag:
     or   r10w,  leading_zero_flag ; flip the flag
   .leading_zero_flag_already_set:
     add   rax, ascii_zero ; Convert to ascii code
