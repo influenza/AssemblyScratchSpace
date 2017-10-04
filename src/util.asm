@@ -310,9 +310,6 @@ parse_int:
 string_equals:
   ret
 
-string_copy:
-  ret
-
 print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdout
     mov rax, rdi  ; store provided argument
 
