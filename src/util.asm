@@ -17,7 +17,7 @@ conf_string: db 'printing your response: ', 0
 val: dq  -1
 
 section .text
-global _start
+;global _start
 
 exit: ; set the exit code specified in rdi and terminate the process
       mov     rax, 60 ; syscall: sys_exit
@@ -102,6 +102,7 @@ print_newline:    ; Prints a newline character to stdout
 print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     push  rbp
     mov   rbp, rsp  ; copy initial stack pointer to rbp
+
     sub   rsp, uint_buffer_size    ; Allocate space for 20 digits and a null terminator
 
     lea   rsi, [rbp - uint_buffer_size] ; point to buffer with rsi
@@ -110,7 +111,7 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
     call  print_string
 
     add   rsp, uint_buffer_size ; free space for uint buffer
-    pop rbp
+    pop   rbp
   ret
 
 ; writes decimal representation of the unsigned 8-byte integer in rdi
@@ -167,7 +168,12 @@ render_uint_to_buffer:
     pop   r10
     jnz   .leading_zero_flag_already_set
     test  rax, rax    ; check the quotient
-    jz    .after_write_char   ; Leading zero, don't print it
+    ; leading zero && divisor != 1
+    jnz   .flip_the_flag   ; non-zero quotient, flip the flag
+    cmp   r9, 1
+    je    .flip_the_flag  ; divisor = 1, flip the flag
+    jmp   .after_write_char ; otherwise skip it (leading zero)
+  .flip_the_flag:
     or   r10w,  leading_zero_flag ; flip the flag
   .leading_zero_flag_already_set:
     add   rax, ascii_zero ; Convert to ascii code
@@ -185,8 +191,9 @@ render_uint_to_buffer:
     mov   rax, rdx    ; mov remainder over to be processed
     cqo               ; sign extend rax into rdx
 
-    loop .each_char_loop
-
+    dec   rcx
+    test  rcx, rcx
+    jnz .each_char_loop
     ; Write null terminator
     push  r10   ; r10 is holding the offset into our char buffer in the low byte
     and   r10, 0x1F
@@ -226,7 +233,6 @@ print_int:    ; prints the signed integer passed in $rdi (including sign)
   ret
 
 read_char:  ; Read a character from STDIN and return its value in rax
-    ; TODO: This does not enforce reading a single char from the user
     ; Allocate a one-byte buffer
     push  rbp
     mov   rbp, rsp
@@ -334,12 +340,7 @@ print_hex:    ; prints contents of rdi as a stream of hexidecimal digits to stdo
 
   ret
 
-_start:
-    ; Allocate a 16 char buffer on the stack
-    push    rbp
-    mov     rbp, rsp
-    sub     rsp, 16
-
+_definitely_not_start:
     ; Exercise print_char and print_newline
     ; ---------------------------------------
     mov rdi, [test_string]
