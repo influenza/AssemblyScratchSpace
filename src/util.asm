@@ -257,48 +257,48 @@ read_char:  ; Read a character from STDIN and return its value in rax
 ; return the buffer address, or zero if the input exceeds the buffer size.
 ;     * whitespace characters -> 0x20, 0x90, 0x10
 read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address otherws
-    push    rbp
-    mov     rbp, rsp
-    ; pointer to rdi buffer, buffer size
-    sub     rsp, 16
-    mov     [rbp -  8], rdi ; buffer
-    mov     [rbp - 16], rsi ; buffer size
+    ; rdi = buffer
+    ; rsi = buffer size
+
     ; Effective buffer size is one less than what is provided
-    dec     qword[rbp - 16]
+    dec     rsi
 
     xor     r9, r9  ; use r9 for current index into the buffer
     .read_char_loop:
     ; read a character, if whitespace or end-of-file, break
+    push    rdi
+    push    rsi
     push    r9
     call    read_char
     pop     r9
-    cmp     al, 0x20 ; space
-    je      .end_of_read_loop
+    pop     rsi
+    pop     rdi
+
     cmp     al, 0x09 ; tab
     je      .end_of_read_loop
     cmp     al, 0x10 ; newline
     je      .end_of_read_loop
+    cmp     al, 0x20 ; space
+    je      .end_of_read_loop
     ; else store in current buffer, increment buffer index
-    mov     [rbp - 8 + r9], al
+    mov     [rdi + r9], al
     inc     r9
-    ; if buffer index >= buffer size - 1; set null term, return 0
-    cmp     r9, [rbp - 16]
+    ; if buffer index >= buffer size - 1; null terminate string and return 0
+    cmp     r9, rsi
     jge     .overflowed_buffer
     jmp     .read_char_loop
     
     .end_of_read_loop:
 
-    lea     rax, [rbp - 8]  ; return pointer to buffer
+    mov     rax, rdi  ; return pointer to buffer
     jmp     .end
 
     .overflowed_buffer:
     xor   rax, rax  ; return 0 to indicate overflow
 
     .end:
-    mov     byte[rbp - 8 + r9], 0 ; null-terminate the buffer
+    mov     byte[rdi + r9], 0 ; null-terminate the buffer
 
-    add     rsi, 16
-    pop     rbp
   ret
 
 parse_uint:
