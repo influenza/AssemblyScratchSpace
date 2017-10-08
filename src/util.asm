@@ -259,7 +259,8 @@ read_char:
 
 ; Read a word from STDIN into a provided buffer. Skip whitespace*. The provided
 ; buffer will be null-terminated if the input fits into the buffer. On success,
-; return the buffer address, or zero if the input exceeds the buffer size.
+; return the buffer address in rax, or zero if the input exceeds the buffer size.
+; Return the total bytes read in rdx
 ;     * whitespace characters -> 0x20, 0x90, 0x10
 read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address otherws
     ; rdi = buffer
@@ -285,7 +286,7 @@ read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address 
     jz      .end_of_read_loop ; zero - indicates no character was read
     cmp     rax, 0x09 ; tab
     je      .end_of_read_loop
-    cmp     rax, 0x10 ; newline
+    cmp     rax, 0x0A ; newline
     je      .end_of_read_loop
     cmp     rax, 0x20 ; space
     je      .end_of_read_loop
@@ -302,10 +303,11 @@ read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address 
     jmp     .end
 
     .overflowed_buffer:
-    xor   rax, rax  ; return 0 to indicate overflow
+    xor     rax, rax  ; return 0 to indicate overflow
 
     .end:
     mov     byte[rdi + r9], 0 ; null-terminate the buffer
+    mov     rdx, r9     ; Return total bytes read in rdx
 
   ret
 
