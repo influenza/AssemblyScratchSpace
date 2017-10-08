@@ -457,5 +457,7 @@ if __name__ == "__main__":
                     found_error = True
     if found_error:
         print 'Not all tests have been passed'
+        exit(1)
     else:
         print colored( "Good work, all tests are passed", 'green')
+        exit(0)

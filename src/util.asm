@@ -279,7 +279,7 @@ read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address 
     pop     r9
     pop     rsi
     pop     rdi
-    ; after calling read_char, if rdx is negative, something is amiss and we 
+    ; after calling read_char, if rdx is negative, something is amiss and we
     ; should abort
     test    rdx, rdx ; test will AND the operands, maintaining a sign bit
     js      .end_of_read_loop ; signed - negative value = problem
