@@ -100,6 +100,7 @@ print_newline:    ; Prints a newline character to stdout
   ret
 
 print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
+    ; TODO: A callee-preserved register is not being preserved
     push  rbp
     mov   rbp, rsp  ; copy initial stack pointer to rbp
 
@@ -211,7 +212,7 @@ print_int:    ; prints the signed integer passed in $rdi (including sign)
     ; write sign to the buffer if necessary
     ; use uint for the remaining characters
     mov   rax, rdi
-    test  rax, rax
+    test  rax, rax ; test will AND the operands, thereby maintaining the sign bit
     jns   .unsigned
     ; otherwise print '-' and convert the absolute value to its
     ; unsigned representation
@@ -232,7 +233,9 @@ print_int:    ; prints the signed integer passed in $rdi (including sign)
     pop rbp
   ret
 
-read_char:  ; Read a character from STDIN and return its value in rax
+; Read a character from STDIN and return its value in rax, return the value
+; returned by sys_read in rdx
+read_char:
     ; Allocate a one-byte buffer
     push  rbp
     mov   rbp, rsp
@@ -245,6 +248,8 @@ read_char:  ; Read a character from STDIN and return its value in rax
 
     syscall
 
+    ; Pass along return value from sys_read to the caller
+    mov   rdx, rax
     ; value should now be in [rbp - 1]
     mov   al, byte[rbp - 1]
 
@@ -263,7 +268,7 @@ read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address 
     ; Effective buffer size is one less than what is provided
     dec     rsi
 
-    xor     r9, r9  ; use r9 for current index into the buffer
+    xor     r9, r9  ; use r9 for buffer index
     .read_char_loop:
     ; read a character, if whitespace or end-of-file, break
     push    rdi
@@ -273,12 +278,16 @@ read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address 
     pop     r9
     pop     rsi
     pop     rdi
-
-    cmp     al, 0x09 ; tab
+    ; after calling read_char, if rdx is negative, something is amiss and we 
+    ; should abort
+    test    rdx, rdx ; test will AND the operands, maintaining a sign bit
+    js      .end_of_read_loop ; signed - negative value = problem
+    jz      .end_of_read_loop ; zero - indicates no character was read
+    cmp     rax, 0x09 ; tab
     je      .end_of_read_loop
-    cmp     al, 0x10 ; newline
+    cmp     rax, 0x10 ; newline
     je      .end_of_read_loop
-    cmp     al, 0x20 ; space
+    cmp     rax, 0x20 ; space
     je      .end_of_read_loop
     ; else store in current buffer, increment buffer index
     mov     [rdi + r9], al
@@ -289,7 +298,6 @@ read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address 
     jmp     .read_char_loop
     
     .end_of_read_loop:
-
     mov     rax, rdi  ; return pointer to buffer
     jmp     .end
 
