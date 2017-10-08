@@ -25,3 +25,11 @@ install-sh
 missing
 compile
 aclocal.m4
+
+# test file cruft
+test/print_char*
+test/print_int*
+test/print_uint*
+test/read_char*
+test/read_word*
+test/string_copy*
