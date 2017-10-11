@@ -1,4 +1,4 @@
-%define ascii_newline 0x10
+%define ascii_newline 0x0A
 %define ascii_hyphen 0x2D
 %define ascii_zero  0x30
 %define uint64_digits 20
@@ -118,7 +118,7 @@ print_uint:   ; Prints the unsigned 8 byte integer in rdi to stdout
 ; writes decimal representation of the unsigned 8-byte integer in rdi
 ; to the buffer pointed to in rsi. The resulting string will be null
 ; terminated. The provided buffer should be at least 21 bytes in length.
-render_uint_to_buffer:   
+render_uint_to_buffer:
     ; the lowest byte of r10 (r10b) will store the current offset into
     ; the provided buffer. The most significant bit of the lower 16 bits
     ; will be used as a flag to skip leading zeroes.
@@ -297,7 +297,7 @@ read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address 
     cmp     r9, rsi
     jge     .overflowed_buffer
     jmp     .read_char_loop
-    
+
     .end_of_read_loop:
     mov     rax, rdi  ; return pointer to buffer
     jmp     .end
