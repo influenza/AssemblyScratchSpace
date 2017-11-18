@@ -17,7 +17,7 @@ conf_string: db 'printing your response: ', 0
 val: dq  -1
 
 section .text
-;global _start
+;global _start ; <-- not used when this is intended as an included header
 
 exit: ; set the exit code specified in rdi and terminate the process
       mov     rax, 60 ; syscall: sys_exit
@@ -200,7 +200,7 @@ render_uint_to_buffer:
     and   r10, 0x1F
     lea   r11, [rsi + r10]
     pop   r10
-    mov   byte[r11], 0x00
+    mov   byte [r11], 0x00
   ret
 
 print_int:    ; prints the signed integer passed in $rdi (including sign)
@@ -311,7 +311,29 @@ read_word:  ; rdi buffer address, rsi size, return 0 if problem, buffer address 
 
   ret
 
+; Given a null-terminated string pointed to by rdi, attempt to parse it and
+; return the value in rax.
 parse_uint:
+  xor     rdx, rdx  ; Zero out the register used to read input chars
+  xor     cx, cx    ; Zero out the counter
+  xor     rax, rax  ; Start result value as zero
+  mov     r9, 10    ; The constant used to shift results as they are read
+  ; Fetch a character into rdx. While it is not the null-terminator...
+  .processing_loop:
+  lea     r10, [rdi + cl]
+  mov     dl, byte[r10]
+  inc     cx
+  test    rdx, rdx
+  jz      .end_of_input
+  ; Multiply existing contents of rax by 10
+  mul     r9
+  ; Subtract ascii '0' from rdx
+  sub     rdx, ascii_zero
+  ; Add the result from the above onto rax
+  add     rax, rdx
+  ; continue
+  jmp     .processing_loop
+  .end_of_input:
   ret
 
 parse_int:
